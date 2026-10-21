@@ -33,9 +33,9 @@ export default function Footer() {
   return (
     <footer className="mt-12 border-t border-gray-200 bg-gray-50">
       <div className="mx-auto max-w-7xl px-4 py-8">
-        <div className="grid gap-8 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
+        <div className="grid grid-cols-2 gap-8 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
           {/* Brand: logo + name + tagline */}
-          <div>
+          <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center gap-2">
               <Image
                 src="/assets/images/logo.png"

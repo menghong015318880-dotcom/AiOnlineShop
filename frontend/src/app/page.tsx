@@ -5,8 +5,8 @@ import Hero from "@/components/Hero";
 import FilterSidebar from "@/components/FilterSidebar";
 import ProductCard from "@/components/ProductCard";
 import Pagination from "@/components/Pagination";
-import { getCategories, getProducts } from "@/services/products";
-import type { Category, Paginated, Product } from "@/types";
+import { getCategories, getFilterOptions, getProducts } from "@/services/products";
+import type { Category, FilterOptions, Paginated, Product } from "@/types";
 
 const PER_PAGE = 8;
 
@@ -33,17 +33,21 @@ function HomeContent({ search }: { search: string }) {
   // Filter state
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [maxPrice, setMaxPrice] = useState(500);
+  const [brands, setBrands] = useState<string[]>([]);       // NEW
+  const [minRating, setMinRating] = useState<number | null>(null); // NEW
   const [page, setPage] = useState(1);
 
   // Data state
   const [categories, setCategories] = useState<Category[]>([]);
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({ brands: [], ratings: [] }); // NEW
   const [result, setResult] = useState<Paginated<Product> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Load categories once
+  // Load categories and filter options (brands, ratings) once
   useEffect(() => {
     getCategories().then(setCategories).catch(() => setError("Cannot load categories"));
+    getFilterOptions().then(setFilterOptions).catch(() => setError("Cannot load filters"));
   }, []);
 
   // Reload products whenever a filter or the page changes
@@ -56,6 +60,8 @@ function HomeContent({ search }: { search: string }) {
       search: search || undefined,
       categoryId: categoryId ?? undefined,
       maxPrice,
+      brands,
+      minRating: minRating ?? undefined,
       page,
       perPage: PER_PAGE,
     })
@@ -66,15 +72,17 @@ function HomeContent({ search }: { search: string }) {
     return () => {
       cancelled = true;
     };
-  }, [search, categoryId, maxPrice, page]);
+  }, [search, categoryId, maxPrice, brands, minRating, page]);
 
   // Search from the Hero box: put the text in the URL (same as the header search)
   const handleSearch = (text: string) =>
     router.push(text ? `/?search=${encodeURIComponent(text)}` : "/");
 
-  // Changing a filter goes back to page 1
+  // Changing any filter goes back to page 1
   const handleCategory = (id: number | null) => { setCategoryId(id); setPage(1); };
   const handlePrice = (value: number) => { setMaxPrice(value); setPage(1); };
+  const handleBrands = (list: string[]) => { setBrands(list); setPage(1); };
+  const handleRating = (min: number | null) => { setMinRating(min); setPage(1); };
 
   // Placeholder until the cart feature exists
   const handleAddToCart = (product: Product) => console.log("Add to cart:", product.id);
@@ -89,8 +97,14 @@ function HomeContent({ search }: { search: string }) {
       <div id="products" className="mt-6 grid scroll-mt-20 gap-6 md:grid-cols-[260px_1fr]">
         <FilterSidebar
           categories={categories}
+          brands={filterOptions.brands}
+          ratings={filterOptions.ratings}
           selectedCategoryId={categoryId}
+          selectedBrands={brands}
+          minRating={minRating}
           onCategoryChange={handleCategory}
+          onBrandsChange={handleBrands}
+          onRatingChange={handleRating}
           onPriceApply={handlePrice}
         />
 
