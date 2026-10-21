@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation"; // App Router uses next/navigation
-import { FiShoppingCart, FiUser } from "react-icons/fi"; // user and cart icons
+import { FiMenu, FiSearch, FiShoppingCart, FiUser, FiX } from "react-icons/fi";
 
 // Navigation links. "href" with # scrolls to a section on the home page.
 const NAV_LINKS = [
@@ -16,9 +16,9 @@ const NAV_LINKS = [
 ];
 
 // Top navigation bar.
-// cartCount is a placeholder until the cart feature is built.
 export default function Header({ cartCount = 0 }: { cartCount?: number }) {
   const [text, setText] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false); // hamburger menu open or closed
   const router = useRouter();
   const pathname = usePathname();
 
@@ -26,15 +26,35 @@ export default function Header({ cartCount = 0 }: { cartCount?: number }) {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const q = text.trim();
+    setMenuOpen(false);
     router.push(q ? `/?search=${encodeURIComponent(q)}` : "/");
   };
 
   // Only items with a real path can be "active" (not the # anchors)
   const isActive = (href: string) => !href.includes("#") && pathname === href;
 
+  // The same search box is used in the bar and in the phone menu
+  const searchForm = (className: string) => (
+    <form onSubmit={handleSearch} className={className}>
+      <input
+        value={text} // must be {text}, not "text"
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Search for products..."
+        className="min-w-0 flex-1 px-3 py-2 text-sm outline-none"
+      />
+      <button
+        type="submit"
+        aria-label="Search"
+        className="flex items-center bg-blue-600 px-3 text-white hover:bg-blue-700"
+      >
+        <FiSearch className="text-lg" />
+      </button>
+    </form>
+  );
+
   return (
     <header className="sticky top-0 z-40 border-b border-gray-200 bg-white">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4">
         {/* Logo icon + brand name side by side.
             The image file must exist at public/assets/images/logo.png */}
         <Link href="/" className="flex shrink-0 items-center gap-2">
@@ -47,13 +67,13 @@ export default function Header({ cartCount = 0 }: { cartCount?: number }) {
             style={{ height: "36px", width: "auto" }}
             priority
           />
-          <span className="text-xl font-bold text-gray-900">
+          <span className="text-lg font-bold text-gray-900 sm:text-xl">
             SmartShop <span className="text-blue-600">AI</span>
           </span>
         </Link>
 
-        {/* Main navigation (shown on large screens) */}
-        <nav className="hidden gap-6 text-sm font-medium text-gray-700 lg:flex">
+        {/* Main navigation: only on large desktop screens (xl and up) */}
+        <nav className="hidden gap-6 text-sm font-medium text-gray-700 xl:flex">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.label}
@@ -65,27 +85,18 @@ export default function Header({ cartCount = 0 }: { cartCount?: number }) {
           ))}
         </nav>
 
-        {/* Header search box */}
-        <form
-          onSubmit={handleSearch}
-          className="hidden max-w-xs flex-1 overflow-hidden rounded-lg border border-gray-300 md:flex"
-        >
-          <input
-            value={text} // must be {text}, not "text"
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Search for products..."
-            className="w-full px-3 py-2 text-sm outline-none"
-          />
-          <button type="submit" className="bg-blue-600 px-3 text-sm text-white hover:bg-blue-700">
-            Search
-          </button>
-        </form>
+        {/* Search box in the bar: tablet and desktop only (md and up) */}
+        {searchForm("hidden min-w-0 max-w-xs flex-1 overflow-hidden rounded-lg border border-gray-300 md:flex")}
 
-        <div className="flex shrink-0 items-center gap-5 text-sm">
-          {/* Login / Register with user icon */}
-          <Link href="/login" className="flex items-center gap-2 text-gray-700 hover:text-blue-600">
+        <div className="flex shrink-0 items-center gap-4 text-sm">
+          {/* Login / Register: the text is shown from lg, smaller screens show only the icon */}
+          <Link
+            href="/login"
+            aria-label="Login / Register"
+            className="flex items-center gap-2 text-gray-700 hover:text-blue-600"
+          >
             <FiUser className="text-xl" />
-            <span className="hidden sm:inline">Login / Register</span>
+            <span className="hidden lg:inline">Login / Register</span>
           </Link>
 
           {/* Cart icon with item count badge */}
@@ -97,8 +108,43 @@ export default function Header({ cartCount = 0 }: { cartCount?: number }) {
               </span>
             )}
           </Link>
+
+          {/* Hamburger button: hidden on desktop (xl and up) */}
+          <button
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-label="Menu"
+            aria-expanded={menuOpen}
+            className="text-2xl text-gray-700 hover:text-blue-600 xl:hidden"
+          >
+            {menuOpen ? <FiX /> : <FiMenu />}
+          </button>
         </div>
       </div>
+
+      {/* Dropdown menu for phone and tablet */}
+      {menuOpen && (
+        <div className="border-t border-gray-200 bg-white px-4 py-3 xl:hidden">
+          {/* Search is only needed here on phones (tablet already has it in the bar) */}
+          <div className="mb-3 md:hidden">
+            {searchForm("flex overflow-hidden rounded-lg border border-gray-300")}
+          </div>
+
+          <nav className="flex flex-col">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                onClick={() => setMenuOpen(false)} // close the menu after choosing a link
+                className={`border-b border-gray-100 py-3 text-sm font-medium last:border-b-0 ${
+                  isActive(link.href) ? "text-blue-600" : "text-gray-700"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }
