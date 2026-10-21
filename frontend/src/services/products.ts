@@ -73,3 +73,16 @@ export async function getFilterOptions(): Promise<FilterOptions> {
 
   return { brands, ratings };
 }
+
+// NEW: similar products = same category first, then other products if more are needed
+export async function getRelatedProducts(
+  productId: number,
+  categoryId: number,
+  limit = 2
+): Promise<Product[]> {
+  await delay(200);
+  const others = mockProducts.filter((p) => p.is_active && p.id !== productId);
+  const sameCategory = others.filter((p) => p.category_id === categoryId);
+  const rest = others.filter((p) => p.category_id !== categoryId);
+  return [...sameCategory, ...rest].slice(0, limit);
+}

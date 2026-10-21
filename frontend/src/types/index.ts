@@ -17,9 +17,12 @@ export interface Product {
   stock: number;        // 0 means out of stock
   image_url: string;
   is_active: boolean;
-  brand: string;        // NEW: brand name, e.g. "Sony"
-  rating: number;       // NEW: average rating, 0 to 5
-  review_count: number; // NEW: number of reviews
+  brand: string;        // brand name, e.g. "Sony"
+  rating: number;       // average rating, 0 to 5
+  review_count: number; // number of reviews
+  old_price?: number;   // NEW: price before discount (optional)
+  images?: string[];    // NEW: extra gallery images (optional, falls back to image_url)
+  features?: string[];
 }
 
 // Query options for the product list (search, filter, pagination)
@@ -28,8 +31,8 @@ export interface ProductQuery {
   categoryId?: number;
   minPrice?: number;
   maxPrice?: number;
-  brands?: string[];    // NEW: selected brands (any of them)
-  minRating?: number;   // NEW: show products with rating >= this value
+  brands?: string[];    // selected brands (any of them)
+  minRating?: number;   // show products with rating >= this value
   page?: number;
   perPage?: number;
 }
@@ -43,7 +46,7 @@ export interface Paginated<T> {
   lastPage: number;
 }
 
-// NEW: options shown in the filter sidebar, with the number of products for each
+// Options shown in the filter sidebar, with the number of products for each
 export interface BrandOption {
   name: string;
   count: number;

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { FaStar } from "react-icons/fa";
 import type { Product } from "@/types";
 
@@ -8,16 +9,16 @@ interface ProductCardProps {
   onAddToCart: (product: Product) => void; // cart logic comes later
 }
 
-// One product in the grid.
+// One product in the grid. The image and the name open the detail page.
 export default function ProductCard({ product, categoryName, onAddToCart }: ProductCardProps) {
   const outOfStock = product.stock <= 0;
+  const href = `/products/${product.id}`;
 
   return (
     // overflow-hidden clips the image to the rounded corners of the card
     <div className="flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white">
-      {/* Image area. object-contain shows the whole image (nothing is cropped).
-          Change to object-cover if you want the image to fill the area. */}
-      <div className="relative aspect-square w-full bg-white">
+      {/* Image area (click = open the detail page). object-contain shows the whole image. */}
+      <Link href={href} className="relative block aspect-square w-full bg-white">
         <Image
           src={product.image_url}
           alt={product.name}
@@ -30,20 +31,28 @@ export default function ProductCard({ product, categoryName, onAddToCart }: Prod
             {categoryName}
           </span>
         )}
-      </div>
+      </Link>
 
       {/* Text and button keep their own padding */}
       <div className="flex flex-1 flex-col p-3">
-        <h3 className="text-sm font-medium text-gray-900">{product.name}</h3>
+        <Link href={href} className="text-sm font-medium text-gray-900 hover:text-blue-600">
+          {product.name}
+        </Link>
 
-        {/* NEW: star, average rating and number of reviews */}
+        {/* Star, average rating and number of reviews */}
         <div className="mt-1 flex items-center gap-1 text-xs text-gray-600">
           <FaStar className="text-yellow-400" />
           <span className="font-medium">{product.rating.toFixed(1)}</span>
           <span className="text-gray-400">({product.review_count})</span>
         </div>
 
-        <p className="mt-1 text-lg font-bold text-gray-900">${product.price.toFixed(2)}</p>
+        {/* Price and old price (only when the product has one) */}
+        <div className="mt-1 flex items-baseline gap-2">
+          <span className="text-lg font-bold text-gray-900">${product.price.toFixed(2)}</span>
+          {product.old_price && product.old_price > product.price && (
+            <span className="text-xs text-gray-400 line-through">${product.old_price.toFixed(2)}</span>
+          )}
+        </div>
 
         {/* Stock message (FR-08: do not allow ordering more than the stock) */}
         {outOfStock && <p className="text-xs text-red-500">Out of stock</p>}
