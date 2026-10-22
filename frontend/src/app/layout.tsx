@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 // CartProvider wraps everyting, so every page can read and change the cart.
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" data-scroll-behavior="smooth">
       <body className="bg-white text-gray-900 antialiased">
         <CartProvider>
           {/* Header uses usePathname(), so it must be inside Supense */}

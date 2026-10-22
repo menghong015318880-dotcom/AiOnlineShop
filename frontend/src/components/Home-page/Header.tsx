@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect ,useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
@@ -18,6 +18,8 @@ const NAV_LINKS = [
 // Top navigation bar.
 export default function Header() {
   const { count: cartCount } = useCart();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const [text, setText] = useState("");
   const [menuOpen, setMenuOpen] = useState(false); // hamburger menu open or closed
   const router = useRouter();
@@ -103,7 +105,7 @@ export default function Header() {
           {/* Cart icon with item count badge */}
           <Link href="/cart" aria-label="Cart" className="relative text-gray-700 hover:text-blue-600">
             <FiShoppingCart className="text-2xl" />
-            {cartCount > 0 && (
+            {mounted && cartCount > 0 && (
               <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-xs text-white">
                 {cartCount}
               </span>
