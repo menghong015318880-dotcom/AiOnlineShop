@@ -5,6 +5,7 @@ import Hero from "@/components/Home-page/Hero";
 import FilterSidebar from "@/components/Home-page/FilterSidebar";
 import ProductCard from "@/components/Home-page/ProductCard";
 import Pagination from "@/components/Home-page/Pagination";
+import { useCart } from "@/context/CartContext";
 import {
   getCategories,
   getFilterOptions,
@@ -35,6 +36,7 @@ function HomeWithSearch() {
 
 function HomeContent({ search }: { search: string }) {
   const router = useRouter();
+  const { addItem } = useCart();
 
   // Filter state
   const [categoryId, setCategoryId] = useState<number | null>(null);
@@ -112,8 +114,7 @@ function HomeContent({ search }: { search: string }) {
   };
 
   // Placeholder until the cart feature exists
-  const handleAddToCart = (product: Product) =>
-    console.log("Add to cart:", product.id);
+  const handleAddToCart = (product: Product) => addItem(product, 1);
 
   // Find the category name for the badge on each card
   const categoryName = (id: number) =>

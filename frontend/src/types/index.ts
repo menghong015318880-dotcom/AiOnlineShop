@@ -61,3 +61,16 @@ export interface FilterOptions {
   brands: BrandOption[];
   ratings: RatingOption[];
 }
+
+// An item in the cart. It keeps a small copy of the product, so the cart page
+// can show it without loading the product again.
+export interface CartItem {
+  product_id: number;
+  name: string;
+  brand: string;
+  price: number;
+  old_price?: number;
+  image_url: string;
+  stock: number; // used to limit the quantity (FR-08)
+  quantity: number;
+}

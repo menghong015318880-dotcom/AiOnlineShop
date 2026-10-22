@@ -1,7 +1,7 @@
 "use client";
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   FiAward, FiChevronRight, FiHeadphones, FiHome, FiMinus, FiPlus,
   FiShield, FiShoppingCart, FiTruck, FiZap,
@@ -11,6 +11,7 @@ import ProductGallery from "@/components/Product-detail/ProductGallery";
 import ProductTabs from "@/components/Product-detail/ProductTabs";
 import SimilarProducts from "@/components/Product-detail/SimilarProducts";
 import Stars from "@/components/Product-detail/Stars";
+import { useCart } from "@/context/CartContext";
 import { getCategories, getProduct, getRelatedProducts } from "@/services/products";
 import type { Category, Product } from "@/types";
 
@@ -40,6 +41,9 @@ function ProductDetailRoute() {
 }
 
 function ProductDetail({ id }: { id: number }) {
+  const router = useRouter();
+  const { addItem } = useCart(); // cart from CartContext
+
   const [product, setProduct] = useState<Product | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [related, setRelated] = useState<Product[]>([]);
@@ -68,8 +72,8 @@ function ProductDetail({ id }: { id: number }) {
     };
   }, [id]);
 
-  // Placeholder until the cart feature exists
-  const handleAddToCart = (p: Product, qty = 1) => console.log("Add to cart:", p.id, "qty:", qty);
+  // Add a product to the cart (the cart limits the quantity to the stock)
+  const handleAddToCart = (p: Product, qty = 1) => addItem(p, qty);
 
   if (loading) return <p className="py-20 text-center text-gray-500">Loading...</p>;
 
@@ -182,9 +186,13 @@ function ProductDetail({ id }: { id: number }) {
               <FiShoppingCart /> Add to Cart
             </button>
 
-            {/* Buy Now will add to the cart and go to checkout when the cart is built */}
+            {/* Buy Now: add to the cart, then open the cart page.
+                Later this will go to the checkout page. */}
             <button
-              onClick={() => handleAddToCart(product, quantity)}
+              onClick={() => {
+                handleAddToCart(product, quantity);
+                router.push("/cart");
+              }}
               disabled={outOfStock}
               className="flex items-center gap-2 rounded-lg border border-blue-600 px-5 py-3 text-sm font-medium text-blue-600 hover:bg-blue-50 disabled:cursor-not-allowed disabled:border-gray-300 disabled:text-gray-400"
             >
@@ -228,8 +236,9 @@ function ProductDetail({ id }: { id: number }) {
         </aside>
       </div>
 
-      {/* Bottom section: tabs | similar products */}
-      <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
+      {/* Bottom section: tabs | similar products.
+          items-start: each box is as tall as its own content. */}
+      <div className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
         <ProductTabs product={product} categoryName={categoryName} />
         <SimilarProducts products={related} onAddToCart={(p) => handleAddToCart(p, 1)} />
       </div>

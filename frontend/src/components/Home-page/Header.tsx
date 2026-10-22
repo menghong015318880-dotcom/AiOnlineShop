@@ -1,8 +1,8 @@
 "use client";
-
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useCart } from "@/context/CartContext";
 import { usePathname, useRouter } from "next/navigation"; // App Router uses next/navigation
 import { FiMenu, FiSearch, FiShoppingCart, FiUser, FiX } from "react-icons/fi";
 
@@ -16,7 +16,8 @@ const NAV_LINKS = [
 ];
 
 // Top navigation bar.
-export default function Header({ cartCount = 0 }: { cartCount?: number }) {
+export default function Header() {
+  const { count: cartCount } = useCart();
   const [text, setText] = useState("");
   const [menuOpen, setMenuOpen] = useState(false); // hamburger menu open or closed
   const router = useRouter();
