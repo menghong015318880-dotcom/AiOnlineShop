@@ -70,7 +70,59 @@ export interface CartItem {
   brand: string;
   price: number;
   old_price?: number;
+
   image_url: string;
   stock: number; // used to limit the quantity (FR-08)
   quantity: number;
+}
+
+// ----- Checkout and orders -----
+export type PaymentMethod = "card" | "aba" | "cash_on_delivery";
+export type PaymentStatus = "unpaid" | "paid";
+export type OrderStatus = "pending" | "comfirmed" | "shipped" | "delivered" | "cancelled";
+
+// Delivery information typed by the customer
+export interface ShippingInfo {
+  full_name: string;
+  phone: string;
+  email: string; // optional
+  address: string;
+  province: string;
+  district: string;
+  commune: string;
+}
+
+export interface OrderItem {
+  product_id: number;
+  name: string;
+  image_url: string;
+  unit_price: number;
+  quantity: number;
+  line_total: number;
+}
+
+export interface Order {
+  id: number;
+  order_number: string;
+  status: OrderStatus;
+  payment_method: PaymentMethod;
+  payment_status: PaymentStatus;
+  subtotal: number;
+  discount: number;
+  delivery_fee: number;
+  total: number;
+  shipping: ShippingInfo;
+  items: OrderItem[];
+  idempotency_key: string;
+  created_at: string;
+}
+
+// What the browser sends to create an order.
+// Only product ids and qunatities: the SERVER calculates every price and the total.
+export interface CreateOrderInput {
+  items: { product_id: number; quantity: number }[];
+  shipping: ShippingInfo;
+  payment_method: PaymentMethod;
+  discount_code?: string;
+  idempotency_key: string; // same key = same order (protects against double clicks)
 }

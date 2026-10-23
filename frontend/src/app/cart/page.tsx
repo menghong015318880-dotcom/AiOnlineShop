@@ -7,14 +7,8 @@ import {
   FiShield, FiShoppingBag, FiShoppingCart, FiTrash2, FiTruck,
 } from "react-icons/fi";
 import { useCart } from "@/context/CartContext";
+import { FREE_SHIPPING_MIN, SHIPPING_FEE, money } from "@/lib/pricing";
 
-// Business rules (from the mockup). The fee under the minimum is temporary.
-const FREE_SHIPPING_MIN = 50; // free shipping on orders over $50
-const SHIPPING_FEE = 3;       // TEMPORARY: confirm the real delivery fee rule
-
-// Format a number like $1,298.00
-const money = (n: number) =>
-  `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export default function CartPage() {
   const { items, ready, updateQuantity, removeItem, removeMany } = useCart();
@@ -258,7 +252,7 @@ export default function CartPage() {
               {/* The /checkout page is built next. Until then this link shows a 404. */}
               {selected.length > 0 ? (
                 <Link
-                  href="/checkout"
+                  href={`/checkout?items=${selected.map((i) => i.product_id).join(",")}`}
                   className="mt-5 flex items-center justify-center gap-2 rounded-lg bg-blue-600 py-3 text-sm font-medium text-white hover:bg-blue-700"
                 >
                   <FiLock /> Proceed to Checkout <FiArrowRight />
