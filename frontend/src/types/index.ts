@@ -101,6 +101,12 @@ export interface OrderItem {
   line_total: number;
 }
 
+// One step in the life of an order (used by the tracking timeline)
+export interface StatusEvent {
+  status: OrderStatus;
+  at: string; //ISO date
+}
+
 export interface Order {
   id: number;
   order_number: string;
@@ -115,6 +121,7 @@ export interface Order {
   items: OrderItem[];
   idempotency_key: string;
   created_at: string;
+  status_history?: StatusEvent[];  // optional: older orders do not have it
 }
 
 // What the browser sends to create an order.

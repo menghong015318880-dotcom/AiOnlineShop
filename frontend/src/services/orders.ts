@@ -2,6 +2,7 @@
 // Later, replace the bodies with the Laravel API:
 //   createOrder  -> POST /api/orders (with the Idempotency-Key header)
 //   getOrders    -> GET  /api/orders
+//   getOrder     -> GET  /api/orders/{id}
 //   cancelOrder  -> POST /api/orders/{id}/cancel
 // The pages stay the same.
 import { mockProducts } from "@/lib/mock-data";
@@ -67,6 +68,8 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
     line_total: round2(product.price * quantity),
   }));
 
+  const now = new Date().toISOString();
+
   const order: Order = {
     id: orders.length + 1,
     order_number: `SS-${Date.now().toString().slice(-8)}`,
@@ -81,7 +84,8 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
     shipping: input.shipping,
     items,
     idempotency_key: input.idempotency_key,
-    created_at: new Date().toISOString(),
+    created_at: now,
+    status_history: [{ status: "pending", at: now }],
   };
 
   writeOrders([...orders, order]);
@@ -94,6 +98,12 @@ export async function getOrders(): Promise<Order[]> {
   return readOrders().reverse();
 }
 
+// One order by id, or null when it does not exist (used by the order detail page)
+export async function getOrder(orderId: number): Promise<Order | null> {
+  await delay(300);
+  return readOrders().find((o) => o.id === orderId) ?? null;
+}
+
 // Cancel an order. Only a pending order can be cancelled (FR-14).
 // The real backend must also give the stock back.
 export async function cancelOrder(orderId: number): Promise<Order> {
@@ -104,7 +114,14 @@ export async function cancelOrder(orderId: number): Promise<Order> {
   if (index === -1) throw new Error("Order not found.");
   if (orders[index].status !== "pending") throw new Error("Only a pending order can be cancelled.");
 
-  const updated: Order = { ...orders[index], status: "cancelled" };
+  const updated: Order = {
+    ...orders[index],
+    status: "cancelled",
+    status_history: [
+      ...(orders[index].status_history ?? []),
+      { status: "cancelled", at: new Date().toISOString() },
+    ],
+  };
   orders[index] = updated;
   writeOrders(orders);
   return updated;

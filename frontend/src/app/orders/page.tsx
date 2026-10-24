@@ -3,13 +3,12 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  FiChevronDown, FiChevronLeft, FiChevronRight, FiChevronUp, FiEye,
-  FiFilter, FiPackage, FiSearch, FiShoppingBag,
+  FiChevronLeft, FiChevronRight, FiEye, FiFilter, FiPackage, FiSearch, FiShoppingBag,
 } from "react-icons/fi";
 import StatusBadge from "@/components/orders/StatusBadge";
 import { money } from "@/lib/pricing";
-import { cancelOrder, getOrders } from "@/services/orders";
-import type { Order, OrderStatus, PaymentMethod } from "@/types";
+import { getOrders } from "@/services/orders";
+import type { Order, OrderStatus } from "@/types";
 
 const PER_PAGE = 6;
 
@@ -24,12 +23,6 @@ const FILTERS: { key: Filter; label: string }[] = [
   { key: "delivered", label: "Delivered" },
   { key: "cancelled", label: "Cancelled" },
 ];
-
-const PAYMENT_LABEL: Record<PaymentMethod, string> = {
-  card: "Credit / Debit Card",
-  aba: "ABA Bank",
-  cash_on_delivery: "Cash on Delivery",
-};
 
 // "Oct 14, 2026" and "10:24 AM". Used only after the orders are loaded in the browser.
 function formatDate(iso: string) {
@@ -47,8 +40,6 @@ export default function OrdersPage() {
   const [filter, setFilter] = useState<Filter>("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [openId, setOpenId] = useState<number | null>(null); // order whose details are open
-  const [cancellingId, setCancellingId] = useState<number | null>(null);
 
   // Load the orders once
   useEffect(() => {
@@ -81,19 +72,6 @@ export default function OrdersPage() {
   // Changing the filter or the search goes back to page 1
   const changeFilter = (key: Filter) => { setFilter(key); setPage(1); };
   const changeSearch = (text: string) => { setSearch(text); setPage(1); };
-
-  const handleCancel = async (order: Order) => {
-    if (!window.confirm(`Cancel order ${order.order_number}?`)) return;
-    setCancellingId(order.id);
-    try {
-      const updated = await cancelOrder(order.id);
-      setOrders((prev) => (prev ? prev.map((o) => (o.id === updated.id ? updated : o)) : prev));
-    } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Could not cancel the order.");
-    } finally {
-      setCancellingId(null);
-    }
-  };
 
   return (
     <div className="py-2">
@@ -189,7 +167,6 @@ export default function OrdersPage() {
               <ul className="mt-3 space-y-3">
                 {visible.map((order) => {
                   const date = formatDate(order.created_at);
-                  const open = openId === order.id;
                   const first = order.items[0];
                   const units = order.items.reduce((sum, i) => sum + i.quantity, 0);
                   const thumbs = order.items.slice(0, 3);
@@ -230,65 +207,14 @@ export default function OrdersPage() {
 
                         <p className="font-semibold text-gray-900">{money(order.total)}</p>
 
-                        <button
-                          onClick={() => setOpenId(open ? null : order.id)}
-                          aria-expanded={open}
+                        {/* Opens the order detail page */}
+                        <Link
+                          href={`/orders/${order.id}`}
                           className="flex items-center justify-center gap-2 rounded-lg border border-blue-600 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50"
                         >
-                          <FiEye /> View Details {open ? <FiChevronUp /> : <FiChevronDown />}
-                        </button>
+                          <FiEye /> View Details
+                        </Link>
                       </div>
-
-                      {/* Details of this order (opens inside the row) */}
-                      {open && (
-                        <div className="grid gap-6 border-t border-gray-200 bg-gray-50/60 p-4 text-sm text-gray-700 lg:grid-cols-3">
-                          <div>
-                            <h3 className="font-semibold text-gray-900">Items</h3>
-                            <ul className="mt-2 space-y-2">
-                              {order.items.map((i) => (
-                                <li key={i.product_id} className="flex justify-between gap-3">
-                                  <span>{i.name} × {i.quantity}</span>
-                                  <span>{money(i.line_total)}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-
-                          <div>
-                            <h3 className="font-semibold text-gray-900">Delivery to</h3>
-                            <p className="mt-2">{order.shipping.full_name}</p>
-                            <p>{order.shipping.phone}</p>
-                            <p>{order.shipping.address}</p>
-                            <p>{order.shipping.commune}, {order.shipping.district}, {order.shipping.province}</p>
-                            <h3 className="mt-4 font-semibold text-gray-900">Payment</h3>
-                            <p className="mt-2">{PAYMENT_LABEL[order.payment_method]}</p>
-                            <p>{order.payment_status === "paid" ? "Paid" : "Pay on delivery"}</p>
-                          </div>
-
-                          <div>
-                            <h3 className="font-semibold text-gray-900">Summary</h3>
-                            <dl className="mt-2 space-y-1.5">
-                              <div className="flex justify-between"><dt>Subtotal</dt><dd>{money(order.subtotal)}</dd></div>
-                              <div className="flex justify-between"><dt>Discount</dt><dd className="text-green-600">-{money(order.discount)}</dd></div>
-                              <div className="flex justify-between"><dt>Shipping</dt><dd>{order.delivery_fee === 0 ? "Free" : money(order.delivery_fee)}</dd></div>
-                              <div className="flex justify-between border-t border-gray-200 pt-2 text-base font-bold text-gray-900">
-                                <dt>Total</dt><dd>{money(order.total)}</dd>
-                              </div>
-                            </dl>
-
-                            {/* A customer can cancel only while the order is pending (FR-14) */}
-                            {order.status === "pending" && (
-                              <button
-                                onClick={() => handleCancel(order)}
-                                disabled={cancellingId === order.id}
-                                className="mt-4 w-full rounded-lg border border-red-300 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
-                              >
-                                {cancellingId === order.id ? "Cancelling..." : "Cancel Order"}
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      )}
                     </li>
                   );
                 })}
