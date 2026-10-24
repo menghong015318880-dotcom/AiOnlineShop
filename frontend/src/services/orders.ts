@@ -1,6 +1,9 @@
 // Order service (MOCK). It saves orders in localStorage.
-// Later, replace the body of createOrder with: POST /api/orders (with the
-// Idempotency-Key header). The pages stay the same.
+// Later, replace the bodies with the Laravel API:
+//   createOrder  -> POST /api/orders (with the Idempotency-Key header)
+//   getOrders    -> GET  /api/orders
+//   cancelOrder  -> POST /api/orders/{id}/cancel
+// The pages stay the same.
 import { mockProducts } from "@/lib/mock-data";
 import { DISCOUNT_CODES, calcTotals, round2 } from "@/lib/pricing";
 import type { CreateOrderInput, Order, OrderItem } from "@/types";
@@ -85,8 +88,24 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
   return order;
 }
 
-// For the order history page (built later)
+// All orders, newest first (used by the order history page)
 export async function getOrders(): Promise<Order[]> {
-  await delay(200);
+  await delay(300);
   return readOrders().reverse();
+}
+
+// Cancel an order. Only a pending order can be cancelled (FR-14).
+// The real backend must also give the stock back.
+export async function cancelOrder(orderId: number): Promise<Order> {
+  await delay(300);
+  const orders = readOrders();
+  const index = orders.findIndex((o) => o.id === orderId);
+
+  if (index === -1) throw new Error("Order not found.");
+  if (orders[index].status !== "pending") throw new Error("Only a pending order can be cancelled.");
+
+  const updated: Order = { ...orders[index], status: "cancelled" };
+  orders[index] = updated;
+  writeOrders(orders);
+  return updated;
 }

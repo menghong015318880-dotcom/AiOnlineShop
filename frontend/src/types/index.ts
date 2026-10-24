@@ -79,7 +79,7 @@ export interface CartItem {
 // ----- Checkout and orders -----
 export type PaymentMethod = "card" | "aba" | "cash_on_delivery";
 export type PaymentStatus = "unpaid" | "paid";
-export type OrderStatus = "pending" | "comfirmed" | "shipped" | "delivered" | "cancelled";
+export type OrderStatus = "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
 
 // Delivery information typed by the customer
 export interface ShippingInfo {
@@ -126,3 +126,4 @@ export interface CreateOrderInput {
   discount_code?: string;
   idempotency_key: string; // same key = same order (protects against double clicks)
 }
+

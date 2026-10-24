@@ -303,12 +303,20 @@ function Checkout({ itemsParam }: { itemsParam: string }) {
           </dl>
         </div>
 
-        <Link
-          href="/"
-          className="mt-6 flex items-center justify-center rounded-lg bg-blue-600 py-3 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          Continue Shopping
-        </Link>
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <Link
+            href="/orders"
+            className="flex items-center justify-center rounded-lg border border-blue-600 py-3 text-sm font-medium text-blue-600 hover:bg-blue-50"
+          >
+            View My Orders
+          </Link>
+          <Link
+            href="/"
+            className="flex items-center justify-center rounded-lg bg-blue-600 py-3 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            Continue Shopping
+          </Link>
+        </div>
       </div>
     );
   }
