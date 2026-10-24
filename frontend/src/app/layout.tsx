@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import "./globals.css";
-import Header from "@/components/Home-page/Header";
-import Footer from "@/components/Home-page/Footer";
-import AiChatButton from "@/components/Home-page/AiChatButton";
+import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 
 export const metadata: Metadata = {
@@ -11,22 +8,15 @@ export const metadata: Metadata = {
   description: "Smart shopping with AI recommendations",
 };
 
-// Root layout: header, footer and the AI button appear on every page.
-// CartProvider wraps everyting, so every page can read and change the cart.
+// Root layout: only the things every page needs (login state and cart).
+// The header and footer are in the (shop) layout, so the login page does not have them.
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" data-scroll-behavior="smooth">
       <body className="bg-white text-gray-900 antialiased">
-        <CartProvider>
-          {/* Header uses usePathname(), so it must be inside Supense */}
-          <Suspense fallback={<div className="h-16 border-b border-gray-200 bg-white"/>}>
-          <Header />
-          </Suspense>
-
-          <main className="mx-auto max-w-7xl px-4 pay-4">{children}</main>
-          <Footer />
-          <AiChatButton />
-        </CartProvider>
+        <AuthProvider>
+          <CartProvider>{children}</CartProvider>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { usePathname, useRouter } from "next/navigation"; // App Router uses next/navigation
 import { FiMenu, FiSearch, FiShoppingCart, FiUser, FiX } from "react-icons/fi";
+import { FiLogOut } from "react-icons/fi";
+import { useAuth } from "@/context/AuthContext";
 
 // Navigation links. "href" with # scrolls to a section on the home page.
 const NAV_LINKS = [
@@ -18,6 +20,8 @@ const NAV_LINKS = [
 // Top navigation bar.
 export default function Header() {
   const { count: cartCount } = useCart();
+  const { user, ready: authReady, logout } = useAuth();
+  const [userMenu, setUserMenu] = useState(false); // the menu under the user icon
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const [text, setText] = useState("");
@@ -92,25 +96,52 @@ export default function Header() {
         {searchForm("hidden min-w-0 max-w-xs flex-1 overflow-hidden rounded-lg border border-gray-300 md:flex")}
 
         <div className="flex shrink-0 items-center gap-4 text-sm">
-          {/* Login / Register: the text is shown from lg, smaller screens show only the icon */}
-          <Link
-            href="/login"
-            aria-label="Login / Register"
-            className="flex items-center gap-2 text-gray-700 hover:text-blue-600"
-          >
-            <FiUser className="text-xl" />
-            <span className="hidden lg:inline">Login / Register</span>
-          </Link>
+          {/* Logged in: name and a small menu. Not logged in: the Login / Register link. */}
+          {mounted && authReady && user ? (
+            <div className="relative">
+              <button
+                onClick={() => setUserMenu((v) => !v)}
+                aria-expanded={userMenu}
+                aria-label="Account menu"
+                className="flex items-center gap-2 text-gray-700 hover:text-blue-600"
+              >
+                <FiUser className="text-xl" />
+                <span className="hidden max-w-[120px] truncate lg:inline">{user.full_name}</span>
+              </button>
 
-          {/* Cart icon with item count badge */}
-          <Link href="/cart" aria-label="Cart" className="relative text-gray-700 hover:text-blue-600">
-            <FiShoppingCart className="text-2xl" />
-            {mounted && cartCount > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-xs text-white">
-                {cartCount}
-              </span>
-            )}
-          </Link>
+              {userMenu && (
+                <div className="absolute right-0 top-full z-50 mt-2 w-52 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                  <p className="truncate px-4 py-2 text-xs text-gray-500">{user.email}</p>
+                  <Link
+                    href="/orders"
+                    onClick={() => setUserMenu(false)}
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    My Orders
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setUserMenu(false);
+                      logout();
+                      router.push("/");
+                    }}
+                    className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50"
+                  >
+                    <FiLogOut /> Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              aria-label="Login / Register"
+              className="flex items-center gap-2 text-gray-700 hover:text-blue-600"
+            >
+              <FiUser className="text-xl" />
+              <span className="hidden lg:inline">Login / Register</span>
+            </Link>
+          )}
 
           {/* Hamburger button: hidden on desktop (xl and up) */}
           <button

@@ -134,3 +134,25 @@ export interface CreateOrderInput {
   idempotency_key: string; // same key = same order (protects against double clicks)
 }
 
+// ----------- Accounts ----------
+
+// The logged-in customer (never includes the password)
+export interface User {
+  id: number;
+  full_name: string;
+  email: string;
+  phone: string;
+}
+
+export interface RegisterInput {
+  full_name: string;
+  email: string;
+  phone: string;
+  password: string;
+}
+
+export interface LoginInput {
+  email: string;
+  password: string;
+  remember: boolean; // true = stay logged in after the browser is closed
+}
