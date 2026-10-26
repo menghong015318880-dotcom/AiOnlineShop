@@ -7,7 +7,7 @@ import { FaRobot } from "react-icons/fa";
 import { FiLogOut, FiMenu, FiSearch, FiShoppingCart, FiX } from "react-icons/fi";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
-import { ACCOUNT_NAV } from "@/lib/account-nav";
+import { ACCOUNT_NAV_GROUPS } from "@/lib/account-nav";
 
 // The frame of the customer account pages: sidebar, top bar and the login check.
 export default function AccountShell({ children }: { children: React.ReactNode }) {
@@ -19,15 +19,15 @@ export default function AccountShell({ children }: { children: React.ReactNode }
   const [open, setOpen] = useState(false); // sidebar on phones
   const [text, setText] = useState("");    // search box
 
-  // Not logged in: go to the login page, and come back here after the login
+  // Not logged in: go to the login page, and come back to the account after the login
   useEffect(() => {
-    if (ready && !user) router.replace("/login?next=/account");
-  }, [ready, user, router]);
+    if (ready && !user) router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+  }, [ready, user, router, pathname]);
 
   if (!ready || !user) return <p className="py-20 text-center text-gray-500">Loading...</p>;
 
-  // Only the Dashboard link can be "active" (the other links leave this page)
-  const isActive = (href: string) => href === "/account" && pathname === "/account";
+  // A link is "active" when it is the page we are on. Links with # (like Track Parcel) never are.
+  const isActive = (href: string) => !href.includes("#") && pathname === href;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,31 +74,38 @@ export default function AccountShell({ children }: { children: React.ReactNode }
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3">
-          <ul className="space-y-1">
-            {ACCOUNT_NAV.map(({ label, href, Icon, ready: pageReady }) =>
-              pageReady ? (
-                <li key={href}>
-                  <Link
-                    href={href}
-                    onClick={() => setOpen(false)}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium ${
-                      isActive(href) ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-50"
-                    }`}
-                  >
-                    <Icon className="text-lg" /> {label}
-                  </Link>
-                </li>
-              ) : (
-                // The page is not built yet
-                <li key={href}>
-                  <span className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-400">
-                    <Icon className="text-lg" /> {label}
-                    <span className="ml-auto rounded bg-gray-100 px-1.5 py-0.5 text-[10px]">Soon</span>
-                  </span>
-                </li>
-              )
-            )}
-          </ul>
+          {ACCOUNT_NAV_GROUPS.map((group, index) => (
+            <div key={index} className={index > 0 ? "mt-6 border-t border-gray-100 pt-4" : ""}>
+              {group.title && (
+                <p className="mb-2 px-3 text-xs font-semibold text-gray-500">{group.title}</p>
+              )}
+              <ul className="space-y-1">
+                {group.items.map(({ label, href, Icon, ready: pageReady }) =>
+                  pageReady ? (
+                    <li key={href}>
+                      <Link
+                        href={href}
+                        onClick={() => setOpen(false)}
+                        className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium ${
+                          isActive(href) ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        <Icon className="text-lg" /> {label}
+                      </Link>
+                    </li>
+                  ) : (
+                    // The page is not built yet
+                    <li key={href}>
+                      <span className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-400">
+                        <Icon className="text-lg" /> {label}
+                        <span className="ml-auto rounded bg-gray-100 px-1.5 py-0.5 text-[10px]">Soon</span>
+                      </span>
+                    </li>
+                  )
+                )}
+              </ul>
+            </div>
+          ))}
 
           {/* Help card */}
           <div className="mt-6 rounded-xl bg-blue-50 p-4">
@@ -106,8 +113,10 @@ export default function AccountShell({ children }: { children: React.ReactNode }
               <FaRobot />
             </span>
             <p className="mt-3 font-bold text-gray-900">Need help?</p>
-            <p className="text-sm font-medium text-gray-700">Ask our AI Assistant</p>
-            <p className="mt-1 text-xs text-gray-500">Find the right product, get recommendations, and more!</p>
+            <p className="text-sm font-medium text-blue-600">Ask our AI Assistant</p>
+            <p className="mt-1 text-xs text-gray-500">
+              Find the right product, get recommendations, track your order and more!
+            </p>
             <Link
               href="/account#assistant"
               onClick={() => setOpen(false)}
@@ -118,15 +127,25 @@ export default function AccountShell({ children }: { children: React.ReactNode }
           </div>
         </nav>
 
-        <div className="border-t border-gray-200 p-3">
+        {/* The logged-in customer and the logout button */}
+        <div className="flex items-center gap-3 border-t border-gray-200 p-4">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white">
+            {initials}
+          </span>
+          <div className="min-w-0 flex-1 leading-tight">
+            <p className="truncate text-sm font-medium text-gray-900">{user.full_name}</p>
+            <p className="truncate text-xs text-gray-500">{user.email}</p>
+          </div>
           <button
             onClick={() => {
               logout();
               router.push("/");
             }}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-red-500"
+            aria-label="Logout"
+            title="Logout"
+            className="text-lg text-gray-500 hover:text-red-500"
           >
-            <FiLogOut className="text-lg" /> Logout
+            <FiLogOut />
           </button>
         </div>
       </aside>
@@ -146,7 +165,7 @@ export default function AccountShell({ children }: { children: React.ReactNode }
             <input
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Search for products, brands and more..."
+              placeholder="Search for products..."
               className="w-full bg-transparent py-2.5 text-sm outline-none"
             />
           </form>
@@ -166,7 +185,7 @@ export default function AccountShell({ children }: { children: React.ReactNode }
                 {initials}
               </span>
               <span className="hidden leading-tight sm:block">
-                <span className="block max-w-35 truncate text-sm font-medium text-gray-900">{user.full_name}</span>
+                <span className="block max-w-[140px] truncate text-sm font-medium text-gray-900">{user.full_name}</span>
                 <span className="block text-xs text-gray-500">
                   {user.role === "admin" ? "Administrator" : "Customer"}
                 </span>

@@ -15,7 +15,7 @@ import type { Order, Product } from "@/types";
 // The 4 quick cards under the welcome box. A page that is not built yet is shown as "Soon".
 const QUICK_CARDS = [
   { title: "Create Order", text: "Shop your favorite products", href: "/", Icon: FiPlusCircle, color: "bg-blue-50 text-blue-600" },
-  { title: "My Order", text: "View your order history", href: "/orders", Icon: FiBox, color: "bg-green-50 text-green-600" },
+  { title: "My Orders", text: "View your order history", href: "/account/orders", Icon: FiBox, color: "bg-green-50 text-green-600" },
   { title: "Track Parcel", text: "Check your delivery status", href: "#track", Icon: FiTruck, color: "bg-violet-50 text-violet-600" },
   { title: "My Address", text: "Manage your shipping address", href: "/account/addresses", Icon: FiMapPin, color: "bg-orange-50 text-orange-600" },
 ];
@@ -50,12 +50,16 @@ export default function AccountDashboardPage() {
   const trackedOrder = orders.find((o) => o.status !== "cancelled") ?? null;
 
   return (
-    <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+    // grid-cols-[minmax(0,1fr)] keeps the column as wide as the screen on phones,
+    // so a wide table can not make the whole page scroll sideways.
+    <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
       {/* ===== Left column ===== */}
-      <div className="space-y-6">
+      <div className="min-w-0 space-y-6">
         {/* Welcome box. To add an image, put it in public/assets/images/ and use <Image> here. */}
-        <section className="rounded-xl bg-gradient-to-r from-blue-50 to-blue-200 p-6 md:p-8">
-          <h1 className="text-3xl font-bold text-gray-900">Hello, {user?.full_name}! 👋</h1>
+        <section className="rounded-xl bg-gradient-to-r from-blue-50 to-blue-200 p-5 sm:p-6 md:p-8">
+          <h1 className="break-words text-2xl font-bold text-gray-900 sm:text-3xl">
+            Hello, {user?.full_name}! 👋
+          </h1>
           <p className="mt-2 font-medium text-gray-900">Welcome back to SmartShop AI!</p>
           <p className="mt-2 max-w-md text-sm text-gray-600">
             Discover amazing products, get personalized recommendations, and enjoy a smarter shopping experience.
@@ -69,7 +73,7 @@ export default function AccountDashboardPage() {
         </section>
 
         {/* Quick cards */}
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {QUICK_CARDS.map(({ title, text, href, Icon, color }) => {
             const content = (
               <>
@@ -102,7 +106,7 @@ export default function AccountDashboardPage() {
       </div>
 
       {/* ===== Right column ===== */}
-      <div className="space-y-6">
+      <div className="min-w-0 space-y-6">
         <AssistantPanel />
         <TrackParcelCard order={trackedOrder} />
 
