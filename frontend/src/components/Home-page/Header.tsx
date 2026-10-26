@@ -112,6 +112,14 @@ export default function Header() {
               {userMenu && (
                 <div className="absolute right-0 top-full z-50 mt-2 w-52 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
                   <p className="truncate px-4 py-2 text-xs text-gray-500">{user.email}</p>
+                    <Link
+                      href="/account"
+                      onClick={() => setUserMenu(false)}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                    My Account
+                  </Link>
+                  
                   <Link
                     href="/orders"
                     onClick={() => setUserMenu(false)}

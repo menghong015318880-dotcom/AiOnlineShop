@@ -142,6 +142,7 @@ export interface User {
   full_name: string;
   email: string;
   phone: string;
+  role: "customer" | "admin"; // who can open / admin
 }
 
 export interface RegisterInput {

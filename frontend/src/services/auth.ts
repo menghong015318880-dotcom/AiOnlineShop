@@ -3,24 +3,33 @@
 //   register -> POST /api/register
 //   login    -> POST /api/login
 //   logout   -> POST /api/logout
-//   getCurrentUser -> GET /api/me
+//   getCurrentUser -> GET /api/me   (the answer includes the role)
 // The pages stay the same.
 //
-// WARNING: this is NOT secure. Passwords are only hashed in the browser for testing.
+// WARNING: this is NOT secure. Passwords are only hashed in the browser for testing,
+// and anybody can change the data in their own browser.
 import type { LoginInput, RegisterInput, User } from "@/types";
-import { resolve } from "path";
-import { start } from "repl";
 
 const USERS_KEY = "smartshop-users";
-const SESSION_KEY = "smartshop-session";  // id of the logged-in user
+const SESSION_KEY = "smartshop-session"; // id of the logged-in user
+
+// MOCK admin rule: an account with one of these emails is an admin.
+// Register with one of them, then open /admin. Add your own email if you like.
+// The real project must store the role in the database (users.role).
+export const ADMIN_EMAILS = ["admin@smartshop.test"];
+const isAdminEmail = (email: string) => ADMIN_EMAILS.includes(email.toLowerCase());
 
 // A user as saved in the browser (with the password hash)
-interface StoredUser extends User {
+interface StoredUser {
+  id: number;
+  full_name: string;
+  email: string;
+  phone: string;
   password_hash: string;
 }
 
-// Fack network delay
-const delay = (ms = 500) => new Promise ((resolve) => setTimeout(resolve, ms));
+// Fake network delay
+const delay = (ms = 500) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // SHA-256 of "email:password" as a hex text
 async function hashPassword(email: string, password: string): Promise<string> {
@@ -49,19 +58,25 @@ function writeUsers(users: StoredUser[]) {
   }
 }
 
-// Remove the password hash before giving a user to the pages
+// Remove the password hash and add the role before giving a user to the pages
 function toPublic(user: StoredUser): User {
-  return { id: user.id, full_name: user.full_name, email: user.email, phone: user.phone };
+  return {
+    id: user.id,
+    full_name: user.full_name,
+    email: user.email,
+    phone: user.phone,
+    role: isAdminEmail(user.email) ? "admin" : "customer",
+  };
 }
 
 // Remember who is logged in.
-// remember = true -> localStorage (stays after the browser is closed)
+// remember = true  -> localStorage (stays after the browser is closed)
 // remember = false -> sessionStorage (ends when the tab is closed)
 function startSession(userId: number, remember: boolean) {
   try {
     localStorage.removeItem(SESSION_KEY);
     sessionStorage.removeItem(SESSION_KEY);
-    (remember ? localStorage: sessionStorage).setItem(SESSION_KEY, String(userId));
+    (remember ? localStorage : sessionStorage).setItem(SESSION_KEY, String(userId));
   } catch {
     // Blocked storage: the user stays logged out
   }
@@ -71,9 +86,9 @@ export async function register(input: RegisterInput): Promise<User> {
   await delay();
   const users = readUsers();
   const email = input.email.trim().toLowerCase();
-  
+
   if (users.some((u) => u.email === email)) {
-    throw new Error("This email is already registered. Plases login.");
+    throw new Error("This email is already registered. Please login.");
   }
 
   const user: StoredUser = {
@@ -109,11 +124,11 @@ export function logout() {
     localStorage.removeItem(SESSION_KEY);
     sessionStorage.removeItem(SESSION_KEY);
   } catch {
-    // Ignor blocked storage
+    // Ignore blocked storage
   }
 }
 
-// The logged-in user, or null. Only works is the browser.
+// The logged-in user, or null. Only works in the browser.
 export function getCurrentUser(): User | null {
   try {
     const id = Number(localStorage.getItem(SESSION_KEY) ?? sessionStorage.getItem(SESSION_KEY));
@@ -123,4 +138,9 @@ export function getCurrentUser(): User | null {
   } catch {
     return null;
   }
+}
+
+// Number of customer accounts (admins are not counted). Used by the admin dashboard.
+export function countCustomers(): number {
+  return readUsers().filter((u) => !isAdminEmail(u.email)).length;
 }
